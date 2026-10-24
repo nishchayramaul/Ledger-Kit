@@ -11,6 +11,8 @@ dependencies = [
     "uvicorn>=0.54.0",
     "sqlalchemy[asyncio]",
     "alembic>=1.20.0",
+    "asgi-correlation-id>=5.0.1",
+    "fastapi-problem>=0.12.1",
 ]
 
 [dependency-groups]

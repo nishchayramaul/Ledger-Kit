@@ -35,4 +35,3 @@ def get_health(
 
 
 router.post("/admin/tenants")
-

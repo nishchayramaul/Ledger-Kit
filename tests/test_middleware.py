@@ -1,6 +1,8 @@
 import re
 from collections.abc import Iterator
+from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.db.session import get_db
@@ -29,11 +31,20 @@ def test_generates_request_id_when_client_sends_none() -> None:
     first = client.get("/health").headers[REQUEST_ID_HEADER]
     second = client.get("/health").headers[REQUEST_ID_HEADER]
 
-    assert re.fullmatch(r"req_[0-9a-f]{32}", first)
+    assert re.fullmatch(r"[0-9a-f]{32}", first)
     assert first != second
 
 
-def test_reuses_request_id_sent_by_client() -> None:
-    response = build_client().get("/health", headers={REQUEST_ID_HEADER: "paylite-881"})
+def test_reuses_valid_request_id_sent_by_client() -> None:
+    client_request_id = uuid4().hex
 
-    assert response.headers[REQUEST_ID_HEADER] == "paylite-881"
+    response = build_client().get("/health", headers={REQUEST_ID_HEADER: client_request_id})
+
+    assert response.headers[REQUEST_ID_HEADER] == client_request_id
+
+
+@pytest.mark.parametrize("unsafe_id", ["<script>", "a" * 65, "paylite-881"])
+def test_replaces_request_id_that_is_not_a_uuid(unsafe_id: str) -> None:
+    response = build_client().get("/health", headers={REQUEST_ID_HEADER: unsafe_id})
+
+    assert response.headers[REQUEST_ID_HEADER] != unsafe_id

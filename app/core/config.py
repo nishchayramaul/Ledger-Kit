@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Literal
+from uuid import UUID
 
 from pydantic import Field, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,6 +21,8 @@ class Settings(BaseSettings):
     app_db_max_overflow: int = 10
     app_db_connect_timeout_seconds: int = Field(default=5, gt=0)
     app_health_db_timeout_ms: int = Field(default=2000, gt=0)
+    app_default_tenant_id: UUID | None = None
+    app_supported_currencies: list[str] = ["INR", "USD", "EUR", "GBP", "SGD"]
 
     model_config = SettingsConfigDict(
         env_file=".env",
