@@ -1,6 +1,11 @@
 from typing import Any
 
-from fastapi_problem.error import ConflictProblem, NotFoundProblem, ServerProblem
+from fastapi_problem.error import (
+    ConflictProblem,
+    NotFoundProblem,
+    ServerProblem,
+    UnprocessableProblem,
+)
 
 
 # replaces the message of any unexpected exception so internals never reach the client
@@ -28,3 +33,15 @@ class DuplicateAccountCode(ConflictProblem):
 
 class DuplicateExternalRef(ConflictProblem):
     title = "External reference already exists"
+
+
+class UnbalancedEntry(UnprocessableProblem):
+    title = "Entry is not balanced"
+
+
+class PostingAccountNotFound(UnprocessableProblem):
+    title = "Posting account not found"
+
+
+class PostingCurrencyMismatch(UnprocessableProblem):
+    title = "Posting currency does not match its account"

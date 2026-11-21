@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.error_handler import register_error_handlers
 from app.api.routes.accounts import router as accounts_router
 from app.api.routes.health import router as health_router
+from app.api.routes.journal_entries import router as journal_entries_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.middleware.middleware import add_middlewares
@@ -16,6 +17,7 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
     app.include_router(health_router)
     app.include_router(accounts_router)
+    app.include_router(journal_entries_router)
     return app
 
 
