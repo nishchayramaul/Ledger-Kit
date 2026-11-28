@@ -45,3 +45,15 @@ class PostingAccountNotFound(UnprocessableProblem):
 
 class PostingCurrencyMismatch(UnprocessableProblem):
     title = "Posting currency does not match its account"
+
+
+class JournalEntryNotFound(NotFoundProblem):
+    title = "Journal entry not found"
+
+
+class InvalidCursor(UnprocessableProblem):
+    title = "Invalid cursor"
+
+
+class InvalidDateRange(UnprocessableProblem):
+    title = "Invalid date range"

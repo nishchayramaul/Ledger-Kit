@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, String, Text, func, text
+from sqlalchemy import DateTime, String, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -9,6 +9,7 @@ from app.db.base import Base
 
 class Tenant(Base):
     __tablename__ = "tenants"
+    __table_args__ = (UniqueConstraint("name", name="uq_tenants_name"),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
     name: Mapped[str] = mapped_column(String(200))

@@ -1,22 +1,74 @@
 from collections import defaultdict
+from datetime import datetime
 from uuid import UUID
 
+from sqlakeyset import BadBookmark
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.error import PostingAccountNotFound, PostingCurrencyMismatch, UnbalancedEntry
+from app.core.error import (
+    DuplicateExternalRef,
+    InvalidCursor,
+    InvalidDateRange,
+    JournalEntryNotFound,
+    PostingAccountNotFound,
+    PostingCurrencyMismatch,
+    UnbalancedEntry,
+)
 from app.models.enums import NormalBalance
 from app.models.journal_entry import JournalEntry
 from app.repositories.account_repository import find_accounts_by_ids
-from app.repositories.journal_entry_repository import insert_journal_entry
+from app.repositories.journal_entry_repository import (
+    build_journal_entry_search,
+    find_journal_entries_page,
+    find_journal_entry_by_id,
+    insert_journal_entry,
+)
 from app.schemas.journal_entry import JournalEntryCreate, PostingCreate
 
 
 def create_journal_entry(db: Session, tenant_id: UUID, entry: JournalEntryCreate) -> JournalEntry:
     check_entry_is_balanced(entry.postings)
     check_posting_accounts(db, tenant_id, entry.postings)
-    created = insert_journal_entry(db, tenant_id, entry)
-    db.commit()
+    try:
+        created = insert_journal_entry(db, tenant_id, entry)
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        if "uq_journal_entries_tenant_external_ref" in str(error.orig):
+            raise DuplicateExternalRef(
+                f"External reference {entry.external_ref} already exists"
+            ) from error
+        raise
     return created
+
+
+def get_journal_entry(db: Session, tenant_id: UUID, entry_id: UUID) -> JournalEntry:
+    entry = find_journal_entry_by_id(db, tenant_id, entry_id)
+    if entry is None:
+        raise JournalEntryNotFound(f"Journal entry {entry_id} not found")
+    return entry
+
+
+def search_journal_entries(
+    db: Session,
+    tenant_id: UUID,
+    account_id: UUID | None,
+    external_ref: str | None,
+    effective_from: datetime | None,
+    effective_to: datetime | None,
+    limit: int,
+    cursor: str | None,
+) -> tuple[list[JournalEntry], str | None]:
+    if effective_from and effective_to and effective_from >= effective_to:
+        raise InvalidDateRange("'from' must be earlier than 'to'")
+    statement = build_journal_entry_search(
+        tenant_id, account_id, external_ref, effective_from, effective_to
+    )
+    try:
+        return find_journal_entries_page(db, statement, limit, cursor)
+    except BadBookmark as error:
+        raise InvalidCursor("Cursor is not valid; use next_cursor from a previous page") from error
 
 
 # every currency in the entry must have equal debit and credit totals

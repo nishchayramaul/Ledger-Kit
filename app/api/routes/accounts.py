@@ -13,7 +13,7 @@ from app.services.account_service import create_account, get_account
 router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
 
 
-@router.post("/post-account", status_code=status.HTTP_201_CREATED, response_model=AccountResponse)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=AccountResponse)
 def post_account(
     account: AccountCreate,
     db: Annotated[Session, Depends(get_db)],

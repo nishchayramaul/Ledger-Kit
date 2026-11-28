@@ -31,6 +31,7 @@ class PostingResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    line_number: int
     account_id: UUID
     direction: NormalBalance
     amount: MinorUnits = Field(validation_alias="amount_minor")
@@ -46,3 +47,8 @@ class EntryResponse(BaseModel):
     effective_at: AwareDatetime
     recorded_at: AwareDatetime
     postings: list[PostingResponse]
+
+
+class EntryPage(BaseModel):
+    data: list[EntryResponse]
+    next_cursor: str | None

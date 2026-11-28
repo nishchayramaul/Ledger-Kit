@@ -1,7 +1,18 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import CHAR, BigInteger, Computed, DateTime, ForeignKey, String, Text, func, text
+from sqlalchemy import (
+    CHAR,
+    BigInteger,
+    Computed,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -13,6 +24,10 @@ NORMAL_BALANCE_EXPRESSION = "CASE WHEN type IN ('asset', 'expense') THEN 'debit'
 
 class Account(Base):
     __tablename__ = "accounts"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "code", name="uq_accounts_tenant_code"),
+        UniqueConstraint("tenant_id", "external_ref", name="uq_accounts_tenant_external_ref"),
+    )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
     tenant_id: Mapped[UUID] = mapped_column(ForeignKey("tenants.id"))
